@@ -1,115 +1,175 @@
-import 'package:flutter/material.dart';
+import 'dart:async';
+import 'dart:convert';
 
-void main() {
-  runApp(const MyApp());
+import 'package:bitsdojo_window/bitsdojo_window.dart';
+import 'package:deelz/core/presentation/notifiers/auth_state.dart';
+import 'package:deelz/core/presentation/notifiers/providers.dart';
+import 'package:deelz/home.dart';
+import 'package:deelz/screens/login.dart';
+import 'package:deelz/screens/manage_status.dart';
+import 'package:deelz/screens/profile.dart';
+import 'package:deelz/screens/settings_screen.dart';
+import 'package:deelz/screens/signup.dart';
+import 'package:deelz/screens/teams_detail_page.dart';
+import 'package:deelz/screens/teams_list.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:json_theme/json_theme.dart';
+import 'package:provider/provider.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final themeStr = await rootBundle.loadString('assets/appainter_theme.json');
+  final themeJson = jsonDecode(themeStr);
+  final theme = ThemeDecoder.decodeThemeData(themeJson)!;
+
+  //stater kit
+  //https://github.com/lohanidamodar/flutter_appwrite_starter
+
+//https://blog.logrocket.com/appwrite-flutter-tutorial-with-examples/
+  runApp(MultiProvider(
+    providers: providers,
+    child: MyApp(theme: theme),
+  ));
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+class MyApp extends StatefulWidget {
+  const MyApp({Key? key, required this.theme}) : super(key: key);
+  final ThemeData theme;
 
-  // This widget is the root of your application.
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  // Uri? _latestUri;
+  // Object? _err;
+
+  // StreamSubscription? _sub;
+
+  @override
+  void initState() {
+    super.initState();
+    // _handleIncomingLinks();
+  }
+
+  /* Future<void> initUniLinks() async {
+    _sub = linkStream.listen((String? link) {
+      //
+      if (link != null) {
+        print('listener is working');
+        print(link);
+      } else {
+        print('something else');
+      }
+    }, onError: (err) {
+      //handle this. tell user their action did not succeed.
+    });
+  } */
+
+  /*  void _handleIncomingLinks() {
+    if (!kIsWeb) {
+      // It will handle app links while the app is already started - be it in
+      // the foreground or in the background.
+      _sub = uriLinkStream.listen((Uri? uri) {
+        if (!mounted) return;
+        print('got uri: $uri');
+        setState(() {
+          _latestUri = uri;
+          _err = null;
+        });
+      }, onError: (Object err) {
+        if (!mounted) return;
+        print('got err: $err');
+        setState(() {
+          _latestUri = null;
+          if (err is FormatException) {
+            _err = err;
+          } else {
+            _err = null;
+          }
+        });
+      });
+    }
+  } */
+
+  /*  final ButtonStyle flatButtonStyle = TextButton.styleFrom(
+    backgroundColor: const Color(0xffe4332c),
+    primary: Colors.white,
+    minimumSize: const Size(88, 40),
+    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.all(Radius.circular(9.0)),
+    ), */
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
-        primarySwatch: Colors.blue,
-      ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
-    );
+        routes: {
+          // '/': (context) => LoginPage(),
+          '/loginpage': (context) => const LoginPage(),
+
+          '/signuppage': (context) => SignupPage(),
+          '/homepage': (context) => const HomePage(),
+          '/profilepage': (context) => const ProfilePage(),
+          '/teamlistpage': (context) => const TeamListPage(),
+          '/teamdetailspage': (context) => TeamDetailsPage(
+                teamId: null,
+              ),
+          '/settingsStatus': (context) => const ManageStatus(),
+          '/settingspage': (context) => SettingsPage(),
+          //DealManage is called with MaterialPageRoute builder
+        },
+        title: 'Deelz',
+        // fontFamily: GoogleFonts.aleo().toString(), fontSize: 30.0)
+        debugShowCheckedModeBanner: false,
+        theme: widget.theme,
+        home: FutureBuilder(
+          future: context.read<AccountProvider>().isValid(),
+          builder: (context, snapshot) =>
+              context.watch<AccountProvider>().session == null
+                  ? const LoginPage()
+                  : const HomePage(),
+        )
+        /* if (snapshot.connectionState == ConnectionState.waiting) {
+                return const SpinKitWave(
+                  color: Colors.redAccent,
+                  // duration: Duration(seconds: 6),
+                );
+              } */
+
+        /* 
+          if (status == 'authenticating') {
+            return const Scaffold(
+                body: Center(
+                    child: SpinKitChasingDots(
+              color: Colors.teal,
+            )));
+          }
+
+          if (notLoggedIn.contains(status)) {
+            return const LoginPage();
+          } else if (status == 'authenticated') {
+            return const HomePage();
+          }
+          throw ('No primary view to load. Please contact app developer'); */
+
+        );
   }
-}
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key, required this.title}) : super(key: key);
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+  WindowTitleBarBox buildTitleBarButtons() {
+    return WindowTitleBarBox(
+      child: Row(
+        children: [
+          Expanded(child: Container()),
+          Row(
+            children: [
+              MinimizeWindowButton(),
+              MaximizeWindowButton(),
+              CloseWindowButton()
+            ],
+          )
+        ],
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headline4,
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
