@@ -91,13 +91,13 @@ class _DealsListState extends State<DealsList> {
     var realtime = Realtime(ApiClient.account.client);
     final String subscribePath =
         'databases.62c0bae01d3a8399f7e6.collections.${itemsCollection}.documents';
-    final subscription = realtime.subscribe([
+    subscription = realtime.subscribe([
       subscribePath
     ]); //replace <collectionId> with the ID of your items collection, which can be found in your collection's settings page.
     print('SUBSCRIBE PATH = ${subscribePath}');
 
     // listen to changes
-    subscription.stream.listen((data) {
+    subscription?.stream.listen((data) {
       // data will consist of `event` and a `payload`
       if (data.payload.isNotEmpty) {
         var item = data.payload;

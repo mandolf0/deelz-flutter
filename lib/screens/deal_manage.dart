@@ -46,7 +46,6 @@ class _DealManageState extends State<DealManage>
 
   List<Status> statuses = [];
 
-  late RealtimeSubscription? authLiveChanges;
   //form field controllers
   final TextEditingController _ctlCustomerName = TextEditingController();
   final TextEditingController _ctlAddress = TextEditingController();
@@ -60,11 +59,16 @@ class _DealManageState extends State<DealManage>
   get _percent => 1; //todo: use value from API object
   //GUI control
   bool _editMode = false;
+
+  RealtimeSubscription? subscription;
+
   @override
   void initState() {
     super.initState();
+    subscribe();
 
     initFields();
+    getUserAccount();
     /*  _pages = [
       SizedBox(height: 50, child: Container()),
       SizedBox(height: 50, child: Container()),
@@ -84,6 +88,10 @@ class _DealManageState extends State<DealManage>
 
     // WidgetsBinding.instance!.addPostFrameCallback((_) => onLoad(context));
     // SchedulerBinding.instance!.addPostFrameCallback((_) => onLoad(context));
+  }
+
+  getUserAccount() async {
+    _user = await ApiClient.account.get();
   }
 
   @override
@@ -153,9 +161,9 @@ class _DealManageState extends State<DealManage>
   void subscribe() async {
     final realtime = Realtime(ApiClient.account.client);
 
-    authLiveChanges =
+    subscription =
         realtime.subscribe(['collections.${widget.collectionId}.documents']);
-    authLiveChanges!.stream.listen((data) {
+    subscription?.stream.listen((data) {
       if (data.payload.isNotEmpty) {
         for (var i = 0; i < data.events.length; i++) {
           if (data.events.contains("database.documents.create")) {
@@ -196,7 +204,7 @@ class _DealManageState extends State<DealManage>
     _tabController.dispose();
     pageController.dispose();
     _tabPageIndicator.close();
-    authLiveChanges!.close();
+    subscription?.close;
     super.dispose();
   }
 
@@ -234,8 +242,6 @@ class _DealManageState extends State<DealManage>
 
   @override
   Widget build(BuildContext context) {
-    _user = AccountProvider().current!;
-
     final TextStyle moneyHeader1 = TextStyle(fontWeight: FontWeight.bold);
     final TextStyle moneyHeader2 = TextStyle(fontSize: 16);
 
@@ -276,12 +282,12 @@ class _DealManageState extends State<DealManage>
                           content: Column(
                             children: [
                               LinearProgressIndicator(),
-                              Text(
+                              /* Text(
                                 DateFormat.yMMMEd().format(
                                   DateTime.fromMillisecondsSinceEpoch(int.parse(
                                       "${widget.deal!.paDate.toString()}")),
                                 ),
-                              ),
+                              ), */
                             ],
                           ),
                         ));
@@ -538,43 +544,50 @@ class _DealManageState extends State<DealManage>
                                   return 'Enter a valid phone number';
                                 }
                               }),
-                          Row(
+                          /* Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
                               Text('Pa Signed'),
-                              Text(widget.deal!.paDate == null
+                              Text(widget.deal!.paDate.toString() == ''
                                   ? ''
-                                  : '${widget.deal!.paDate}'),
+                                  : DateFormat.yMMMd().format(
+                                      DateTime.fromMillisecondsSinceEpoch(
+                                        int.parse(_ctlPaDate.text),
+                                      ),
+                                    )),
                               Text('Adjustment'),
                             ],
-                          ),
+                          ), */
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
                               // -------------------------------------------- Date when PA signed
-                              ElevatedButton.icon(
-                                onPressed: () async {
-                                  await pickDate(context, _ctlPaDate);
-                                  setState;
-                                },
-                                icon: Icon(Icons.support_agent),
-                                label: _ctlPaDate.text.isNotEmpty
-                                    ? Text(
-                                        DateFormat.yMMMd().format(
-                                          DateTime.fromMillisecondsSinceEpoch(
-                                            int.parse(_ctlPaDate.text),
-                                          ),
-                                        ),
-                                        style: TextStyle(fontSize: 13))
-                                    : Text('N/A'),
-                              ),
-                              TextButton(
-                                  onPressed: () {
-                                    print("Pa Date is ${_ctlPaDate.text}");
-                                    setState;
-                                    setState(() {});
-                                  },
-                                  child: Text('pa date is?'))
+                              _ctlPaDate.text == 'null'
+                                  ? ElevatedButton.icon(
+                                      onPressed: () async {
+                                        await pickDate(context, _ctlPaDate);
+                                        setState;
+                                      },
+                                      icon: Icon(Icons.support_agent),
+                                      label: _ctlPaDate.text != 'null'
+                                          ? Text(
+                                              DateFormat.yMMMd().format(
+                                                DateTime
+                                                    .fromMillisecondsSinceEpoch(
+                                                  int.parse(_ctlPaDate.text),
+                                                ),
+                                              ),
+                                              style: TextStyle(fontSize: 13))
+                                          : Text('N/A'),
+                                    )
+                                  : TextButton(
+                                      onPressed: () {
+                                        print("Pa Date is ${_ctlPaDate.text}");
+                                        setState;
+                                        setState(() {});
+                                      },
+                                      child: Text('Set Adjuster date'))
+
                               /* ElevatedButton.icon(
                                 onPressed: () async {
                                   pickDate(context);
@@ -777,13 +790,13 @@ class _DealManageState extends State<DealManage>
 
           'signed_date': int.parse(
               _ctlSignedDate.text), // DateTime.now().millisecondsSinceEpoch,
-          'pa_date': int.parse(_ctlPaDate.text)
+          'pa_date': _ctlPaDate.text != 'null' ? int.parse(_ctlPaDate.text) : 0
           // 'ststus': currentItemStatus
         },
         read: [
           ///! use this when payload create
           'user:${_user!.$id}',
-          'team:620c6e12b9278e4aa747'
+          'team:62c2710d77ab13f2c3af'
           // 'team:' + teams.list().
         ],
         write: ['user:${_user!.$id}'],
@@ -803,10 +816,10 @@ class _DealManageState extends State<DealManage>
 
   Future pickDate(
       BuildContext context, TextEditingController controller) async {
-    DateTime initialDate =
-        DateTime.fromMillisecondsSinceEpoch(int.parse(controller.text));
+    late DateTime initialDate;
+    // DateTime.fromMillisecondsSinceEpoch(int.parse(controller.text));
 
-    if (controller.text.isEmpty) {
+    if (controller.text == 'null') {
       initialDate = DateTime.now();
     }
     final newDate = await showDatePicker(
