@@ -118,10 +118,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     final queryParams = _latestUri?.queryParametersAll.entries.toList();
     if (queryParams != null) {
-      if (queryParams!.contains('verified')) {
-        // ApiClient.account.deleteSession(sessionId: 'current');
-        AccountProvider().logout();
-      }
+      print(queryParams);
     }
     return Scaffold(
       drawer: buildDrawer(context),

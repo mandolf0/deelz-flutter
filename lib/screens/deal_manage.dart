@@ -1,25 +1,24 @@
 // ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables
 import 'dart:async';
+
 import 'package:appwrite/appwrite.dart';
 import 'package:appwrite/models.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:deelz/api/client.dart';
 import 'package:deelz/core/presentation/notifiers/auth_state.dart';
 import 'package:deelz/core/res/app_constants.dart';
 import 'package:deelz/data/model/deal.dart';
 import 'package:deelz/data/model/status.dart';
+import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 
-import 'package:flutter/scheduler.dart';
-
 class DealManage extends StatefulWidget {
   Deal? deal;
-  DealManage({
-    Key? key,
-    this.deal,
-  }) : super(key: key);
+
+  String collectionId;
+  DealManage({Key? key, this.deal, required this.collectionId})
+      : super(key: key);
 
   @override
   _DealManageState createState() => _DealManageState();
@@ -27,6 +26,8 @@ class DealManage extends StatefulWidget {
 
 class _DealManageState extends State<DealManage>
     with SingleTickerProviderStateMixin {
+  final String statusCollectionId = '62c0ea8e2ea38765ea3e';
+
   //pageview and tabController syncing
   late TabController _tabController;
   late PageController pageController = PageController();
@@ -38,10 +39,11 @@ class _DealManageState extends State<DealManage>
   List<Widget> _pages = [];
 
 //database stuff
-  late final Client client;
-  final itemsCollection = '620c468c8abb282a6478';
-  late final Databases database;
-  final User _user = AccountProvider().current!;
+
+  Databases db = Databases(ApiClient.account.client,
+      databaseId: ApiClient.database.databaseId);
+  User? _user; //= AuthState.current as User;
+
   List<Status> statuses = [];
 
   late RealtimeSubscription? authLiveChanges;
@@ -121,8 +123,9 @@ class _DealManageState extends State<DealManage>
 
   Future initFields() async {
     print('calling initfields');
-    final lookupStatus =
-        await database.listDocuments(collectionId: '6228257b71958b88af7c');
+    //lookup statuses for field reference
+    final lookupStatus = await ApiClient.database
+        .listDocuments(collectionId: statusCollectionId);
     statuses = List<Document>.from(lookupStatus.documents)
         .map((e) => Status.fromMap(e.data))
         .toList();
@@ -148,10 +151,10 @@ class _DealManageState extends State<DealManage>
   }
 
   void subscribe() async {
-    final realtime = Realtime(client);
+    final realtime = Realtime(ApiClient.account.client);
 
     authLiveChanges =
-        realtime.subscribe(['collections.$itemsCollection.documents']);
+        realtime.subscribe(['collections.${widget.collectionId}.documents']);
     authLiveChanges!.stream.listen((data) {
       if (data.payload.isNotEmpty) {
         for (var i = 0; i < data.events.length; i++) {
@@ -231,6 +234,8 @@ class _DealManageState extends State<DealManage>
 
   @override
   Widget build(BuildContext context) {
+    _user = AccountProvider().current!;
+
     final TextStyle moneyHeader1 = TextStyle(fontWeight: FontWeight.bold);
     final TextStyle moneyHeader2 = TextStyle(fontSize: 16);
 
@@ -762,9 +767,9 @@ class _DealManageState extends State<DealManage>
   Future _updateDeal() async {
     // authLiveChanges!.close();
     try {
-      await database.updateDocument(
+      await ApiClient.database.updateDocument(
         documentId: widget.deal!.id!,
-        collectionId: itemsCollection,
+        collectionId: widget.collectionId,
         data: {
           'cust_name': _ctlCustomerName.text.trim(),
           'address': _ctlAddress.text.trim(),
@@ -777,11 +782,11 @@ class _DealManageState extends State<DealManage>
         },
         read: [
           ///! use this when payload create
-          'user:${_user.$id}',
+          'user:${_user!.$id}',
           'team:620c6e12b9278e4aa747'
           // 'team:' + teams.list().
         ],
-        write: ['user:${_user.$id}'],
+        write: ['user:${_user!.$id}'],
         // documentId: 'unique()',
       );
       _tabPageIndicator.sink.add(_tabController.index + 1);

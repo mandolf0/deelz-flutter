@@ -12,8 +12,10 @@ import 'package:deelz/data/model/status.dart';
 import 'package:deelz/data/model/transaction.dart';
 import 'package:deelz/extensions.dart';
 import 'package:deelz/screens/deal_manage.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class DealsList extends StatefulWidget {
@@ -24,8 +26,8 @@ class DealsList extends StatefulWidget {
 }
 
 class _DealsListState extends State<DealsList> {
-  Databases db =
-      Databases(ApiClient.account.client, databaseId: '62c0bae01d3a8399f7e6');
+  Databases db = Databases(ApiClient.account.client,
+      databaseId: ApiClient.database.databaseId);
 
   List<Deal> items = [];
   // ran once to load items. Used to set deal.statusId based on id match.
@@ -38,9 +40,11 @@ class _DealsListState extends State<DealsList> {
   RealtimeSubscription? subscription;
   // late final Client client;
   final itemsCollection = '62c0bbe9476a14177668';
+  final String statusCollectionId = '62c0ea8e2ea38765ea3e';
+
   final AccountProvider authState = AccountProvider();
 
-  late final User _user; //= AuthState.current as User;
+  User? _user; //= AuthState.current as User;
 
   @override
   void initState() {
@@ -61,7 +65,7 @@ class _DealsListState extends State<DealsList> {
     );
     // lookup status collectiong for later traversing
     final lookupStatus =
-        await db.listDocuments(collectionId: '62c0ea8e2ea38765ea3e');
+        await db.listDocuments(collectionId: statusCollectionId);
     //declared as List<Status>=[];
     statuses = List<Document>.from(lookupStatus.documents)
         .map((e) => Status.fromMap(e.data))
@@ -69,38 +73,44 @@ class _DealsListState extends State<DealsList> {
 
     res.documents.forEach((deal) async {
       // interpolate Status colletion and set values for ```deal```
-      deal.data['ststus'] =
-          statuses.firstWhere((item) => item.id!.contains(deal.data['ststus']));
+      deal.data['status_id'] = statuses
+          .firstWhere((item) => item.id!.contains(deal.data['status_id']));
     });
     var result = List<Document>.from(res.documents)
         .map((e) => Deal.fromMap(e.data))
         .toList();
     items = result;
+    items.forEach((element) {
+      print(element.customerName);
+    });
     // subscribe();
-    //setState(() {});
+    setState(() {});
   }
 
   void subscribe() {
     var realtime = Realtime(ApiClient.account.client);
-
-    subscription = realtime.subscribe([
-      'collections.$itemsCollection.documents'
+    final String subscribePath =
+        'databases.62c0bae01d3a8399f7e6.collections.${itemsCollection}.documents';
+    final subscription = realtime.subscribe([
+      subscribePath
     ]); //replace <collectionId> with the ID of your items collection, which can be found in your collection's settings page.
+    print('SUBSCRIBE PATH = ${subscribePath}');
 
     // listen to changes
-    subscription!.stream.listen((data) {
+    subscription.stream.listen((data) {
       // data will consist of `event` and a `payload`
       if (data.payload.isNotEmpty) {
+        var item = data.payload;
         //start for loop
+        print('payload detected');
 
         for (var i = 0; i < data.events.length; i++) {
-          if (data.events.contains("database.documents.create")) {
-            var item = data.payload;
+          if (data.events.contains("$subscribePath.create")) {
             items.add(
               Deal(
                 id: item['\$id'],
                 statusId: statuses.firstWhere(
-                    (item) => item.id!.contains(data.payload['ststus'])),
+                    (item) => item.id!.contains(data.payload['status_id'])),
                 customerName: item['cust_name'],
                 address: item['address'],
                 phone: item['phone'],
@@ -115,11 +125,10 @@ class _DealsListState extends State<DealsList> {
             );
             setState(() {});
           } else if (data.events.contains("database.documents.delete")) {
-            var item = data.payload;
             items.removeWhere((it) => it.id == item['\$id']);
             setState(() {});
-          } else if (data.events.contains("database.documents.update")) {
-            var item = data.payload;
+          } else if (data.events
+              .contains('databases.*.collections.*.documents.*.update')) {
             // print(item['ststus']);
             //!atempting to update list item
             final oldItem = items
@@ -128,8 +137,8 @@ class _DealsListState extends State<DealsList> {
               //TODO! set permission here too
               items[oldItem] = Deal(
                 id: item['\$id'],
-                statusId: statuses
-                    .firstWhere((lstItem) => lstItem.id == item['ststus']),
+                statusId: statuses.firstWhere(
+                    (lstStatusItem) => lstStatusItem.id == item['status_id']),
 
                 /* statusId: statuses.firstWhere(
                     (element) => data.payload['ststus'] == element.id), */
@@ -158,54 +167,56 @@ class _DealsListState extends State<DealsList> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      // backgroundColor: Color(0xfffafafa),
-      // backgroundColor: Color(0xff8cc5ff),
+    return Consumer<AccountProvider>(builder: (context, user, child) {
+      _user = user.current!;
+      return Scaffold(
+        // backgroundColor: Color(0xfffafafa),
+        // backgroundColor: Color(0xff8cc5ff),
 
-      body: SingleChildScrollView(
-        scrollDirection: Axis.vertical,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            FloatingActionButton(
-              heroTag: 'refreshdeals',
-              child: Text('load'),
-              onPressed: () async => await loadItems(),
-            ),
-            Center(
-              child: Text(
-                'Deals',
-                style: TextStyle(
-                    fontFamily: GoogleFonts.montserrat.toString(),
-                    fontSize: 33),
+        body: SingleChildScrollView(
+          scrollDirection: Axis.vertical,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              FloatingActionButton(
+                heroTag: 'refreshdeals',
+                child: Text('load'),
+                onPressed: () async => await loadItems(),
               ),
-            ),
-            items.isEmpty
-                ? Center(
-                    child: Text(
-                      'So much empty. Need Deals',
-                      style: Theme.of(context).textTheme.bodyText1,
-                    ),
-                  )
-                : buildListViewBuilder(context, itemList: items),
-          ],
+              Center(
+                child: Text(
+                  'Deals',
+                  style: TextStyle(
+                      fontFamily: GoogleFonts.montserrat.toString(),
+                      fontSize: 33),
+                ),
+              ),
+              items.isEmpty
+                  ? Center(
+                      child: Text(
+                        'So much empty. Need Deals',
+                        style: Theme.of(context).textTheme.bodyText1,
+                      ),
+                    )
+                  : buildListViewBuilder(context, itemList: items),
+            ],
+          ),
         ),
-      ),
-      // floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: FloatingActionButton(
-        child: Icon(Icons.add),
-        onPressed: () {
-          // dialog to add new item set editing to false
-          itemToEdit = null;
-          //default to a new status
-          currentItemStatus = statuses
-              .firstWhere((status) => status.id == "6230ca4eaae5d4cbc204")
-              .id;
-          showMyDialog(context);
-        },
-      ),
-    );
+        // floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+        floatingActionButton: FloatingActionButton(
+          child: Icon(Icons.add),
+          onPressed: () {
+            // dialog to add new item set editing to false
+            itemToEdit = null;
+            //default to a new status
+            currentItemStatus = statuses.first.id.toString();
+            // statuses.firstWhere((status) => statuses.first.id.toString());
+            showMyDialog(context);
+          },
+        ),
+      );
+    });
   }
 
   void showMyDialog(BuildContext context, {bool editing = false}) {
@@ -338,10 +349,12 @@ class _DealsListState extends State<DealsList> {
           elevation: 2.0,
           shadowColor: const Color(0xff909090),
           child: ListTile(
+              //todo! use ternary operator to show list of deals or dealsManage based on itemtoedit
               onTap: () => Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (_) => DealManage(
+                        collectionId: itemsCollection,
                         deal: items[index],
                       ),
                     ),
@@ -400,6 +413,7 @@ class _DealsListState extends State<DealsList> {
   List<DropdownMenuItem<String>> buildStatusDropDown() {
     return statuses
         .map((e) => DropdownMenuItem(
+              value: e.id,
               child: ListTile(
                 dense: true,
                 tileColor: currentItemStatus == e.id!
@@ -412,7 +426,6 @@ class _DealsListState extends State<DealsList> {
                             : Colors.black,
                         fontSize: 12)),
               ),
-              value: e.id,
             ))
         .toList();
   }
@@ -425,22 +438,25 @@ class _DealsListState extends State<DealsList> {
         data: {
           'cust_name': name,
           //!TODO pick status Id from list.
-          'status_id': 'some status',
-          'phone': '78787',
+          'status_id': currentItemStatus,
+          'phone': 'needsfield phone',
           'address': address,
           'signed_date': DateTime.now().millisecondsSinceEpoch.toString(),
           'adjusters_date': DateTime.now().millisecondsSinceEpoch.toString(),
           'claim_no': 'new val',
           'carrier_id': 'new val',
-          'sales_rep_id': _user.$id,
+          'sales_rep_id': _user!.$id,
         },
         read: [
           ///! use this when payload create
-          'user:${_user.$id}',
-          'team:620c6e12b9278e4aa747',
+          'user:${_user!.$id}',
+          'team:62c2710d77ab13f2c3af',
           // 'team:' + teams.list().
         ],
-        write: ['user:${_user.$id}'],
+        write: [
+          'user:${_user!.$id}',
+          'team:62c2710d77ab13f2c3af',
+        ],
         // documentId: 'unique()',
       );
     } on AppwriteException catch (e) {
@@ -457,20 +473,25 @@ class _DealsListState extends State<DealsList> {
           'cust_name': status,
           'address': description,
           'signed_date': DateTime.now().millisecondsSinceEpoch,
-          'ststus': currentItemStatus
+          'status_id': currentItemStatus
         },
-        read: [
+        /*  read: [
           ///! use this when payload create
-          'user:${_user.$id}',
-          'team:620c6e12b9278e4aa747'
+          'user:${_user!.$id}',
+          'team:620c6e12b9278e4aa747',
+          'team:62c2710d77ab13f2c3af'
           // 'team:' + teams.list().
         ],
-        write: ['user:${_user.$id}'],
+        write: ['user:${_user!.$id}', 'team:62c2710d77ab13f2c3af'], */
         // documentId: 'unique()',
       );
       itemToEdit = null;
+      Fluttertoast.showToast(msg: 'Saved', backgroundColor: Colors.green);
     } on AppwriteException catch (e) {
-      print(e.message);
+      Fluttertoast.showToast(
+        msg: e.message.toString(),
+        backgroundColor: Colors.black,
+      );
     }
   }
 }

@@ -112,7 +112,9 @@ class AccountProvider extends ChangeNotifier {
     try {
       _current = await ApiClient.account.get();
     } on AppwriteException catch (e) {
-      rethrow;
+      _error = e.toString();
+
+      notifyListeners();
     }
     return Session.fromMap(json.decode(cached));
   }
@@ -147,9 +149,13 @@ class AccountProvider extends ChangeNotifier {
         Store.set("session", json.encode(value.toMap()));
         notifyListeners();
       });
-    } catch (e) {
+    } on AppwriteException catch (e) {
+      _error = '';
       _session = null;
-      throw 'Error login in: ' + e.toString();
+      if (e.code == 401) {
+        _error = "Invalid email or password";
+      }
+      throw '${_error!}';
     }
     return;
 

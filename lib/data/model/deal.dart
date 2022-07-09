@@ -73,7 +73,7 @@ class Deal {
 
     return Deal(
       id: map['\$id'],
-      statusId: map['ststus'],
+      statusId: map['status_id'],
       // statusId: Status.fromMap(jsonDecode(map['ststus'])),
       customerName: map['cust_name'],
       phone: map['phone'],
