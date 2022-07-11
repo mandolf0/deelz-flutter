@@ -1,5 +1,6 @@
 import 'package:appwrite/appwrite.dart';
 import 'package:appwrite/models.dart';
+import 'package:deelz/data/store.dart';
 import 'package:flutter/material.dart';
 import 'package:deelz/api/client.dart';
 import 'package:deelz/core/presentation/notifiers/auth_state.dart';
@@ -44,9 +45,19 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text('Profile'),
-      ),
+      appBar: AppBar(title: const Text('Profile'), actions: [
+        IconButton(
+          onPressed: () async {
+            /*  await Store.get('mycompanyid').then((value) {
+                print(value);
+ }); */
+            AccountProvider().usersAvailable?.forEach((myUser) {
+              print(myUser['userName']);
+            });
+          },
+          icon: Icon(Icons.account_box),
+        )
+      ]),
       body: Consumer<AccountProvider>(
         builder: (context, state, child) {
           final user = state.current;
@@ -67,15 +78,15 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
                 state.current?.emailVerification == false
                     ? ElevatedButton(
-                        child: Text('Send Verification email'),
+                        child: const Text('Send Verification email'),
                         onPressed: () => AccountProvider().verifyEmail().then(
                             (value) => ScaffoldMessenger.of(context)
-                                .showSnackBar(SnackBar(
-                                    content:
-                                        Text('Email verification link sent')))),
+                                .showSnackBar(const SnackBar(
+                                    content: const Text(
+                                        'Email verification link sent')))),
                       )
                     : Container(
-                        child: Icon(
+                        child: const Icon(
                         Icons.circle,
                         color: Colors.green,
                       )),
@@ -87,11 +98,20 @@ class _ProfilePageState extends State<ProfilePage> {
                   title: Text(state.current!.email,
                       style: AppConstants.ksTextStyleLightSecondary),
                 ),
-                ListTile(
+                const ListTile(
                   title: Text("https://youtu.be/X9vw4PGDbGc?t=383",
                       style: AppConstants.ksTextStyleLightSecondary),
                 ),
                 const SizedBox(height: 10.0),
+                Center(
+                  child: Text(
+                    'Preferences',
+                    style: AppConstants.ksTextStyleLightSecondary.copyWith(
+                      fontSize: 23,
+                    ),
+                  ),
+                ),
+                Text(state.current!.prefs.data['company']),
                 Center(
                   child: Text(
                     'My Teams',

@@ -1,5 +1,8 @@
 import 'dart:convert';
 
+import 'package:appwrite/models.dart';
+import 'package:deelz/api/client.dart';
+import 'package:deelz/core/presentation/notifiers/auth_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class Store {
@@ -10,6 +13,27 @@ class Store {
   factory Store() => _instance;
 
   Store._internal();
+
+// set user list from db when loading the app.
+
+  Future<void> storeCompanyUserList() async {
+    List<Map<String, dynamic>>? myuserslist = [];
+
+// use this to filter
+    Future result =
+        ApiClient.database.listDocuments(collectionId: 'company_users');
+
+    result.then((response) async {
+      response.users.forEach((element) {
+        myuserslist.add(element);
+      });
+      //  AccountProvider().usersAvailable?.add( element);
+      AccountProvider().setUsers(myuserslist);
+      print(AccountProvider().usersAvailable);
+    }).catchError((error) {
+      print(error.response);
+    });
+  }
 
   Future<void> _insert(Map<String, dynamic> data) async {
     _prefs ??= await SharedPreferences.getInstance();

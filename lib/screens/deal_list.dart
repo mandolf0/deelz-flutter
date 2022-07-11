@@ -64,6 +64,7 @@ class _DealsListState extends State<DealsList> {
       collectionId: itemsCollection,
     );
     // lookup status collectiong for later traversing
+
     final lookupStatus =
         await db.listDocuments(collectionId: statusCollectionId);
     //declared as List<Status>=[];
@@ -71,11 +72,13 @@ class _DealsListState extends State<DealsList> {
         .map((e) => Status.fromMap(e.data))
         .toList();
 
-    res.documents.forEach((deal) async {
-      // interpolate Status colletion and set values for ```deal```
-      deal.data['status_id'] = statuses
-          .firstWhere((item) => item.id!.contains(deal.data['status_id']));
-    });
+    if (res.documents.isNotEmpty) {
+      res.documents.forEach((deal) async {
+        // interpolate Status colletion and set values for ```deal```
+        deal.data['status_id'] = statuses
+            .firstWhere((item) => item.id!.contains(deal.data['status_id']));
+      });
+    }
     var result = List<Document>.from(res.documents)
         .map((e) => Deal.fromMap(e.data))
         .toList();
@@ -170,7 +173,7 @@ class _DealsListState extends State<DealsList> {
     return Consumer<AccountProvider>(builder: (context, user, child) {
       _user = user.current!;
       return Scaffold(
-        // backgroundColor: Color(0xfffafafa),
+        backgroundColor: Color.fromARGB(255, 88, 117, 175),
         // backgroundColor: Color(0xff8cc5ff),
 
         body: SingleChildScrollView(
@@ -369,8 +372,8 @@ class _DealsListState extends State<DealsList> {
                   ),
                   // Text(niceTime(items[index].signedDate).toString()),
                   Text(
-                    items[index].statusId.status ?? 'N/A',
-                    style: Theme.of(context).textTheme.caption,
+                    items[index].salesRepId,
+                    style: Theme.of(context).textTheme.bodyMedium,
                   )
                 ],
               ),

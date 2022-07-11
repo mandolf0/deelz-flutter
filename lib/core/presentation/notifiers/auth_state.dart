@@ -22,6 +22,13 @@ class AccountProvider extends ChangeNotifier {
   RealtimeSubscription? subscription;
   Realtime? realtime;
 
+  List<Map<String, dynamic>>? _usersAvailable;
+  List<Map<String, dynamic>>? get usersAvailable => _usersAvailable;
+  set setUsersAvailable(List<Map<String, dynamic>> newUsers) {
+    _usersAvailable = newUsers;
+    notifyListeners();
+  }
+
   String? _error;
 
   User? _current;
@@ -138,6 +145,60 @@ class AccountProvider extends ChangeNotifier {
     return _session != null;
   }
 
+  void setUsers(List<Map<String, dynamic>> newUsers) {
+    _usersAvailable = newUsers;
+    notifyListeners();
+  }
+
+  Future<String> getMyCompanyId() async {
+    var companyId = '';
+    List<Map<String, dynamic>>? myuserslist = [];
+
+    try {
+      final DocumentList result = await ApiClient.database.listDocuments(
+          collectionId: 'company_users',
+          queries: [Query.equal('user_id', current!.$id)]);
+      result.documents.forEach((doc) async {
+        companyId = result.documents[0].data['company_id'];
+        print('Company id is $companyId');
+
+        /*   _usersAvailable?.add({
+          'user_id': doc.data['user_id'],
+          'userName': doc.data['userName'],
+        }); */
+        //now list all users and make them avialable as a getter
+
+        final DocumentList dbUserList = await ApiClient.database.listDocuments(
+            collectionId: 'company_users',
+            queries: [Query.equal('company_id', companyId)]);
+
+        dbUserList.documents.forEach((doc) {
+          myuserslist.add({
+            'user_id': doc.data['user_id'],
+            'userName': doc.data['userName'],
+          });
+          setUsersAvailable = myuserslist;
+          notifyListeners();
+          print('total users in company ${usersAvailable?.length}');
+        });
+
+        // end listing users
+      });
+
+      /*        result.then((myComapanyId) {
+       */
+      return companyId;
+    } on AppwriteException catch (e) {
+      print(e);
+    }
+
+    /*  }).onError((error, stackTrace) {
+      throw ('Error associating account.');
+    });
+    throw 'Could not get association'; */
+    return companyId;
+  }
+
   Future<void> login({required String email, required String password}) async {
     try {
       final result = await ApiClient.account
@@ -147,6 +208,20 @@ class AccountProvider extends ChangeNotifier {
         _current = await ApiClient.account.get();
 
         Store.set("session", json.encode(value.toMap()));
+        /*    getMyCompanyId().then(
+            (mycompany) => Store.set("mycompanyid", json.encode(mycompany))); */
+        String cid = await getMyCompanyId();
+        Store.set('mycompanyid', cid);
+        // save list of available users in cache;
+
+        // await Store().storeCompanyUserList();
+        //  result.then(
+        //  (res) => print('see if Store has users list $usersAvailable'));
+
+        // throw ('finish setting users list');
+
+        // logout();
+
         notifyListeners();
       });
     } on AppwriteException catch (e) {
@@ -186,6 +261,8 @@ class AccountProvider extends ChangeNotifier {
 
     result.then((response) {
       Store.remove("session");
+      Store.remove('companyUsers');
+
       print("session destroyed");
       // print(result.toString());
       _signedIn = false;

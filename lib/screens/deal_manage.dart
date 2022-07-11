@@ -310,6 +310,7 @@ class _DealManageState extends State<DealManage>
             TabBar(
               labelColor: Colors.yellow,
               unselectedLabelColor: Colors.white,
+              unselectedLabelStyle: TextStyle(backgroundColor: Colors.blue),
               controller: _tabController,
               onTap: (_) {
                 navigation(true);
