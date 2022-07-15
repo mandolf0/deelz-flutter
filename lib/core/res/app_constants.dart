@@ -4,7 +4,7 @@ class AppConstants {
   static const String projectId = "62c0ba904fcd051b1417";
   // static const String endPoint = "http://192.168.0.64:4003/v1";
   static const String endPoint = "http://apper.ddns.net:4003/v1";
-  // static const String endPoint = "http://192.168.0.108:4003/v1";
+  // static const String endPoint = "http://192.168.0.20:4003/v1";
   static MaterialColor kcPrimary =
       MaterialColor(0xFF366CF6, AppConstants._primaryColor);
 

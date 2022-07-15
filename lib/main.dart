@@ -12,6 +12,7 @@ import 'package:deelz/screens/settings_screen.dart';
 import 'package:deelz/screens/signup.dart';
 import 'package:deelz/screens/teams_detail_page.dart';
 import 'package:deelz/screens/teams_list.dart';
+import 'package:deelz/screens/yo_ui_test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:json_theme/json_theme.dart';

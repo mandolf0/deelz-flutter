@@ -16,7 +16,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:yo_ui/yo_ui.dart';
 
 class DealsList extends StatefulWidget {
   const DealsList({Key? key}) : super(key: key);
@@ -173,7 +173,15 @@ class _DealsListState extends State<DealsList> {
     return Consumer<AccountProvider>(builder: (context, user, child) {
       _user = user.current!;
       return Scaffold(
-        backgroundColor: Color.fromARGB(255, 88, 117, 175),
+        bottomNavigationBar: BottomNavigationBar(items: [
+          const BottomNavigationBarItem(
+              icon: Icon(Icons.dashboard), label: 'Dashboard'),
+          const BottomNavigationBarItem(
+              icon: Icon(Icons.dashboard), label: 'Everyone'),
+          const BottomNavigationBarItem(
+              icon: Icon(Icons.dashboard), label: 'Tasks'),
+        ]),
+        // backgroundColor: Color.fromARGB(255, 88, 117, 175),
         // backgroundColor: Color(0xff8cc5ff),
 
         body: SingleChildScrollView(
@@ -182,19 +190,6 @@ class _DealsListState extends State<DealsList> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              FloatingActionButton(
-                heroTag: 'refreshdeals',
-                child: Text('load'),
-                onPressed: () async => await loadItems(),
-              ),
-              Center(
-                child: Text(
-                  'Deals',
-                  style: TextStyle(
-                      fontFamily: GoogleFonts.montserrat.toString(),
-                      fontSize: 33),
-                ),
-              ),
               items.isEmpty
                   ? Center(
                       child: Text(
@@ -208,7 +203,8 @@ class _DealsListState extends State<DealsList> {
         ),
         // floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
         floatingActionButton: FloatingActionButton(
-          child: Icon(Icons.add),
+          elevation: 6,
+          child: const Icon(Icons.add),
           onPressed: () {
             // dialog to add new item set editing to false
             itemToEdit = null;
@@ -233,11 +229,11 @@ class _DealsListState extends State<DealsList> {
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
-                decoration: InputDecoration(label: Text('Customer Name')),
+                decoration: const InputDecoration(label: Text('Customer Name')),
                 controller: _nameController,
               ),
               TextField(
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                     label: Text('Address'), prefix: Icon(Icons.map)),
                 controller: _desciptionController,
               ),
@@ -258,7 +254,7 @@ class _DealsListState extends State<DealsList> {
                           alignedDropdown: true,
                           child: DropdownButtonFormField(
                             // focusColor: Colors.white,
-                            style: TextStyle(fontSize: 16),
+                            style: const TextStyle(fontSize: 16),
                             value: currentItemStatus,
                             items: buildStatusDropDown(),
 
@@ -299,7 +295,7 @@ class _DealsListState extends State<DealsList> {
         actions: [
           TextButton(
             // style: ButtonStyle(backgroundColor:  ),
-            child: Text('Cancel'),
+            child: const Text('Cancel'),
             onPressed: () {
               itemToEdit = null;
               currentItemStatus = '';
@@ -307,9 +303,10 @@ class _DealsListState extends State<DealsList> {
             },
           ),
           MaterialButton(
-            color: AppConstants.kcSecondaryLight,
-            shape: StadiumBorder(),
-            child: Text(editing ? 'Update' : 'Add'),
+            color: Color(0xffC8162B),
+            shape: const StadiumBorder(),
+            child: Text(editing ? 'Update' : 'Add',
+                style: TextStyle(color: Colors.white)),
             onPressed: () {
               // add new item
               final name = _nameController.text.trim();
@@ -381,7 +378,7 @@ class _DealsListState extends State<DealsList> {
                   ? items[index].address
                   : 'n/a'),
               trailing: IconButton(
-                icon: Icon(Icons.delete),
+                icon: const Icon(Icons.delete),
                 onPressed: () async {
                   await db.deleteDocument(
                     collectionId: itemsCollection,
@@ -398,7 +395,7 @@ class _DealsListState extends State<DealsList> {
                 _desciptionController.text = itemToEdit!.address;
 
                 showMyDialog(context, editing: true);
-              }).addNeumorphism(),
+              }),
         );
       },
     );

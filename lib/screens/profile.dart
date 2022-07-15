@@ -1,11 +1,8 @@
 import 'package:appwrite/appwrite.dart';
 import 'package:appwrite/models.dart';
-import 'package:deelz/data/store.dart';
-import 'package:flutter/material.dart';
-import 'package:deelz/api/client.dart';
 import 'package:deelz/core/presentation/notifiers/auth_state.dart';
 import 'package:deelz/core/res/app_constants.dart';
-import 'package:deelz/screens/teams_detail_page.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 // import 'package:deelz/data/model/team.dart';
 

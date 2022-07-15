@@ -31,7 +31,7 @@ class SettingsPage extends StatelessWidget {
                     entry.key,
                     style: TextStyle(fontSize: 19.0),
                   ),
-                ).addNeumorphism(),
+                ),
               ),
             )
             .toList()

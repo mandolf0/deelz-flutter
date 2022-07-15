@@ -350,7 +350,7 @@ class AccountProvider extends ChangeNotifier {
           teamId: teamId,
           email: email,
           roles: roles,
-          url: 'http://192.168.0.108:5500');
+          url: 'https://deelz.herokuapp.com/joinTeam');
       return result;
     } on AppwriteException catch (e) {
       rethrow;

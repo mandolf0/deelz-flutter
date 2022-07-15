@@ -265,6 +265,7 @@ class _DealManageState extends State<DealManage>
             }
           },
         ),
+
         // backgroundColor: Colors.grey[200],
         appBar: AppBar(
           actions: [
@@ -294,9 +295,6 @@ class _DealManageState extends State<DealManage>
               },
               icon: Icon(Icons.replay_outlined),
             ),
-            IconButton(
-                onPressed: () => AccountProvider().logout(),
-                icon: Icon(Icons.logout)),
           ],
           title: Text((widget.deal != null ? widget.deal!.customerName : 'n/a'),
               style: TextStyle(
@@ -306,32 +304,29 @@ class _DealManageState extends State<DealManage>
           mainAxisSize: MainAxisSize.min,
           children: [
             buildMoneyTracker(moneyHeader1, moneyHeader2),
-            const SizedBox(height: 13),
-            TabBar(
-              labelColor: Colors.yellow,
-              unselectedLabelColor: Colors.white,
-              unselectedLabelStyle: TextStyle(backgroundColor: Colors.blue),
-              controller: _tabController,
-              onTap: (_) {
-                navigation(true);
-              },
-              tabs: [
-                Tab(
-                    icon: Text(
-                  'General',
-                  style: TextStyle(fontSize: 17),
-                )),
-                Tab(
-                    icon: Text(
-                  'Insurance',
-                  style: TextStyle(fontSize: 17),
-                )),
-                Tab(
-                    icon: Text(
-                  'Payments',
-                  style: TextStyle(fontSize: 17),
-                )),
-              ],
+            // const SizedBox(height: 13),
+            Container(
+              decoration: BoxDecoration(color: Colors.red),
+              child: TabBar(
+                // labelColor: Colors.yellow,
+                // unselectedLabelColor: Colors.white,
+                // unselectedLabelStyle: TextStyle(backgroundColor: Colors.blue),
+                controller: _tabController,
+                onTap: (_) {
+                  navigation(true);
+                },
+                tabs: [
+                  Tab(
+                    text: 'General',
+                  ),
+                  Tab(
+                    text: 'Insurance',
+                  ),
+                  Tab(
+                    text: 'Payments',
+                  ),
+                ],
+              ),
             ),
             /*  Expanded(
               child: IndexedStack(index: currentTabIndex, children: _pages),
@@ -387,98 +382,102 @@ class _DealManageState extends State<DealManage>
 
   Container buildMoneyTracker(TextStyle moneyHeader1, TextStyle moneyHeader2) {
     return Container(
-      padding: EdgeInsets.all(8),
-      height: 100.0,
-      decoration: BoxDecoration(
-        boxShadow: [BoxShadow(blurRadius: 12)],
-        shape: BoxShape.rectangle,
-        borderRadius: BorderRadius.only(
-            bottomLeft: Radius.circular(29), bottomRight: Radius.circular(29)),
-        color: AppConstants.kcSecondary,
-      ),
-      child: Row(children: [
-        Expanded(
-          flex: 3,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Contract Amount', style: moneyHeader1),
-              const SizedBox(height: 9),
-              Text(
-                '\$14,000.00',
-                style: moneyHeader2,
-              ),
-            ],
-          ),
+      color: Colors.red,
+      child: Container(
+        padding: EdgeInsets.all(8),
+        height: 100.0,
+        decoration: BoxDecoration(
+          boxShadow: [BoxShadow(blurRadius: 12)],
+          shape: BoxShape.rectangle,
+          borderRadius: BorderRadius.only(
+              bottomLeft: Radius.circular(29),
+              bottomRight: Radius.circular(29)),
+          color: AppConstants.kcSecondary,
         ),
-        Expanded(
-          flex: 3,
-          child: Center(
+        child: Row(children: [
+          Expanded(
+            flex: 3,
             child: Column(
-              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // progress
-                Expanded(
-                    // flex: 23,
-                    child: ClipRRect(
-                  child: Container(
-                    padding: EdgeInsets.all(3),
-                    // color: Colors.white,
-                    decoration:
-                        BoxDecoration(borderRadius: BorderRadius.circular(0)),
-                    // borderRadius: BorderRadius.circular(22.0),
-                    clipBehavior: Clip.antiAlias,
-                    child: LinearPercentIndicator(
-                      linearStrokeCap: LinearStrokeCap.roundAll,
-                      animationDuration: 200,
-                      center: _percent == 1
-                          ? Icon(Icons.money)
-                          : Icon(Icons.hourglass_bottom_outlined,
-                              color: Colors.white),
-                      width: 124.0,
-                      lineHeight: 23.0,
-                      percent: 1,
-                      backgroundColor: Colors.white,
-                      progressColor: Colors.teal[400],
-                    ),
-                  ),
-                )),
+                Text('Contract Amount', style: moneyHeader1),
+                const SizedBox(height: 9),
                 Text(
-                  'Deductible',
-                  style: Theme.of(context)
-                      .textTheme
-                      .caption!
-                      .copyWith(color: Colors.black, fontSize: 14),
+                  '\$14,000.00',
+                  style: moneyHeader2,
                 ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      '\$1,000.00',
-                      style: moneyHeader2,
-                    ),
-                    Icon(Icons.check_circle, color: Colors.white),
-                  ],
-                ),
-                widget.deal != null
-                    ? Text(widget.deal!.statusId.status!, style: moneyHeader1)
-                    : Container()
               ],
             ),
           ),
-        ),
-        Expanded(
-          flex: 3,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text('Received', style: moneyHeader1),
-              const SizedBox(height: 9),
-              Text('\$6,000.00', style: moneyHeader2),
-            ],
+          Expanded(
+            flex: 3,
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // progress
+                  Expanded(
+                      // flex: 23,
+                      child: ClipRRect(
+                    child: Container(
+                      padding: EdgeInsets.all(3),
+                      // color: Colors.white,
+                      decoration:
+                          BoxDecoration(borderRadius: BorderRadius.circular(0)),
+                      // borderRadius: BorderRadius.circular(22.0),
+                      clipBehavior: Clip.antiAlias,
+                      child: LinearPercentIndicator(
+                        linearStrokeCap: LinearStrokeCap.roundAll,
+                        animationDuration: 200,
+                        center: _percent == 1
+                            ? Icon(Icons.money)
+                            : Icon(Icons.hourglass_bottom_outlined,
+                                color: Colors.white),
+                        width: 124.0,
+                        lineHeight: 23.0,
+                        percent: 1,
+                        backgroundColor: Colors.white,
+                        progressColor: Colors.teal[400],
+                      ),
+                    ),
+                  )),
+                  Text(
+                    'Deductible',
+                    style: Theme.of(context)
+                        .textTheme
+                        .caption!
+                        .copyWith(color: Colors.black, fontSize: 14),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        '\$1,000.00',
+                        style: moneyHeader2,
+                      ),
+                      Icon(Icons.check_circle, color: Colors.white),
+                    ],
+                  ),
+                  widget.deal != null
+                      ? Text(widget.deal!.statusId.status!, style: moneyHeader1)
+                      : Container()
+                ],
+              ),
+            ),
           ),
-        ),
-      ]),
+          Expanded(
+            flex: 3,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text('Received', style: moneyHeader1),
+                const SizedBox(height: 9),
+                Text('\$6,000.00', style: moneyHeader2),
+              ],
+            ),
+          ),
+        ]),
+      ),
     );
   }
 

@@ -189,7 +189,7 @@ Widget buildDrawer(BuildContext context) {
                     ),
                     //TODO!: implement user avatar
                     decoration: const BoxDecoration(
-                      color: Colors.indigoAccent,
+                      color: Color(0xffC8162B),
                       /*  image: DecorationImage(
                   image: AssetImage('assets/images/headerbg.png'),
                   fit: BoxFit.cover), */

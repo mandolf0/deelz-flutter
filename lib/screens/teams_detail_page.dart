@@ -2,6 +2,7 @@ import 'package:appwrite/appwrite.dart';
 import 'package:appwrite/models.dart';
 import 'package:flutter/material.dart';
 import 'package:deelz/core/presentation/notifiers/auth_state.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 class TeamDetailsPage extends StatefulWidget {
   TeamDetailsPage({Key? key, this.teamId, this.teamName}) : super(key: key);
@@ -17,14 +18,13 @@ class _TeamDetailsPageState extends State<TeamDetailsPage> {
   //team list used in Invite pop-up
   List<Team> teams = [];
   //email controller
-  late TextEditingController _emailController;
+  TextEditingController _emailController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _getTeamMembers();
     _getTeams();
-    _emailController = TextEditingController();
   }
 
   _getTeams() async {
@@ -131,9 +131,7 @@ class _TeamDetailsPageState extends State<TeamDetailsPage> {
         child: Column(
           mainAxisSize: MainAxisSize.max,
           children: [
-            const TextField(
-              decoration: InputDecoration(hintText: 'Email'),
-            ),
+            const SizedBox(height: 12),
             ElevatedButton(
                 onPressed: () {
                   showDialog(
@@ -167,9 +165,15 @@ class _TeamDetailsPageState extends State<TeamDetailsPage> {
       mainAxisSize: MainAxisSize.min,
       children: [
         TextField(
-          controller: _emailController,
-          decoration: const InputDecoration(hintText: 'Email'),
-        ),
+            controller: _emailController,
+            decoration: const InputDecoration(
+                hintText: 'Email',
+                enabledBorder:
+                    OutlineInputBorder(borderSide: BorderSide(width: 1))),
+            onChanged: (text) {
+              print('First text field: $text');
+            }),
+        const SizedBox(height: 9),
         Container(
           color: Colors.grey,
           height: 300,
@@ -178,6 +182,7 @@ class _TeamDetailsPageState extends State<TeamDetailsPage> {
             shrinkWrap: true,
             children: [
               ...teams.map((team) => ListTile(
+                    tileColor: Colors.white,
                     onTap: () async {
                       try {
                         await AccountProvider().membershipAdd(
@@ -189,8 +194,7 @@ class _TeamDetailsPageState extends State<TeamDetailsPage> {
                         _getTeamMembers();
                         Navigator.of(context).pop();
                       } on AppwriteException catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                            content: Text(e.message ?? 'Error inviting user')));
+                        Fluttertoast.showToast(msg: e.message!);
                       }
                     },
                     title: Text(team.name),
@@ -217,12 +221,20 @@ class _TeamDetailsPageState extends State<TeamDetailsPage> {
           ...memberships.map(
             (memberhip) => ListTile(
               title: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.start,
                 children: [
+                  const CircleAvatar(
+                    backgroundImage: AssetImage('assets/images/mando.jpg'),
+                  ),
+                  const SizedBox(height: 12),
                   Text(memberhip.userName),
+                  Spacer(),
                   (memberhip.confirm)
-                      ? Icon(Icons.check)
-                      : Icon(Icons.circle_outlined)
+                      ? const Icon(
+                          Icons.email,
+                          color: Colors.green,
+                        )
+                      : const Icon(Icons.email_outlined)
                 ],
               ),
               subtitle: Row(children: []),

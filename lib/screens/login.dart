@@ -1,8 +1,7 @@
-import 'package:appwrite/appwrite.dart';
-import 'package:flutter/material.dart';
 import 'package:deelz/core/res/app_constants.dart';
 import 'package:deelz/data/store.dart';
 import 'package:deelz/screens/widgets/auth_page_header.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../core/presentation/notifiers/auth_state.dart';
