@@ -155,11 +155,13 @@ class AccountProvider extends ChangeNotifier {
     List<Map<String, dynamic>>? myuserslist = [];
 
     try {
-      final DocumentList result = await ApiClient.database.listDocuments(
-          collectionId: 'company_users',
-          queries: [Query.equal('user_id', current!.$id)]);
-      result.documents.forEach((doc) async {
-        companyId = result.documents[0].data['company_id'];
+      final DocumentList rsMe = await ApiClient.database.listDocuments(
+        collectionId: 'company_users',
+        queries: [Query.equal('user_id', current!.$id)],
+      );
+
+      rsMe.documents.forEach((doc) async {
+        companyId = rsMe.documents[0].data['company_id'];
         print('Company id is $companyId');
 
         /*   _usersAvailable?.add({
@@ -168,11 +170,11 @@ class AccountProvider extends ChangeNotifier {
         }); */
         //now list all users and make them avialable as a getter
 
-        final DocumentList dbUserList = await ApiClient.database.listDocuments(
+        final DocumentList rsUserList = await ApiClient.database.listDocuments(
             collectionId: 'company_users',
             queries: [Query.equal('company_id', companyId)]);
 
-        dbUserList.documents.forEach((doc) {
+        rsUserList.documents.forEach((doc) {
           myuserslist.add({
             'user_id': doc.data['user_id'],
             'userName': doc.data['userName'],
@@ -183,6 +185,15 @@ class AccountProvider extends ChangeNotifier {
         });
 
         // end listing users
+
+        //cache our company primary team id
+        final DocumentList rsMyGlobalTeam = await ApiClient.database
+            .listDocuments(
+                collectionId: 'companies',
+                queries: [Query.equal('\$id', companyId)]);
+        Future rs = Store.set(
+            'globalTeamId', rsMyGlobalTeam.documents[0].data['globalTeamId']);
+        rs.then((value) => print(value));
       });
 
       /*        result.then((myComapanyId) {

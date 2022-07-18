@@ -3,6 +3,7 @@
 import 'package:appwrite/appwrite.dart';
 //import 'package:appwrite/models.dart' as appwrite;
 import 'package:appwrite/models.dart';
+import 'package:deelz/data/store.dart';
 import 'package:flutter/material.dart';
 import 'package:deelz/api/client.dart';
 import 'package:deelz/core/presentation/notifiers/auth_state.dart';
@@ -34,7 +35,7 @@ class _DealsListState extends State<DealsList> {
   List<Status> statuses = [];
 
   late Deal? itemToEdit;
-  late String? currentItemStatus;
+  String currentItemStatus = '';
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _desciptionController = TextEditingController();
   RealtimeSubscription? subscription;
@@ -44,11 +45,12 @@ class _DealsListState extends State<DealsList> {
 
   final AccountProvider authState = AccountProvider();
 
-  User? _user; //= AuthState.current as User;
+  late final User user; //= AuthState.current as User;
 
   @override
   void initState() {
     super.initState();
+    user = context.read<AccountProvider>().current!;
 
     loadItems();
     subscribe();
@@ -171,7 +173,6 @@ class _DealsListState extends State<DealsList> {
   @override
   Widget build(BuildContext context) {
     return Consumer<AccountProvider>(builder: (context, user, child) {
-      _user = user.current!;
       return Scaffold(
         bottomNavigationBar: BottomNavigationBar(items: [
           const BottomNavigationBarItem(
@@ -209,9 +210,14 @@ class _DealsListState extends State<DealsList> {
             // dialog to add new item set editing to false
             itemToEdit = null;
             //default to a new status
-            currentItemStatus = statuses.first.id.toString();
+            if (statuses.isEmpty) {
+              Fluttertoast.showToast(msg: 'At least one status is needed');
+              Navigator.pushNamed(context, '/settingsStatus');
+            } else {
+              currentItemStatus = statuses.first.id.toString();
+              showMyDialog(context);
+            }
             // statuses.firstWhere((status) => statuses.first.id.toString());
-            showMyDialog(context);
           },
         ),
       );
@@ -389,7 +395,7 @@ class _DealsListState extends State<DealsList> {
               onLongPress: () {
                 //update an item
                 itemToEdit = items[index];
-                currentItemStatus = itemToEdit!.statusId.id;
+                currentItemStatus = itemToEdit!.statusId.id!;
                 //set controllers to the item values
                 _nameController.text = itemToEdit!.customerName;
                 _desciptionController.text = itemToEdit!.address;
@@ -445,17 +451,19 @@ class _DealsListState extends State<DealsList> {
           'adjusters_date': DateTime.now().millisecondsSinceEpoch.toString(),
           'claim_no': 'new val',
           'carrier_id': 'new val',
-          'sales_rep_id': _user!.$id,
+          'sales_rep_id': user.$id,
         },
         read: [
           ///! use this when payload create
-          'user:${_user!.$id}',
-          'team:62c2710d77ab13f2c3af',
+          'user:${AccountProvider().current!.$id}',
+          "user:${user.$id}",
+
+          "team:${Store.get('globalTeamId')}/owner"
           // 'team:' + teams.list().
         ],
         write: [
-          'user:${_user!.$id}',
-          'team:62c2710d77ab13f2c3af',
+          'user:${AccountProvider().current!.$id}',
+          "team:${Store.get('globalTeamId')}/owner"
         ],
         // documentId: 'unique()',
       );

@@ -124,29 +124,13 @@ class _HomePageState extends State<HomePage> {
       drawer: buildDrawer(context),
       appBar: !Platform.isWindows
           ? AppBar(
-              actions: [
-                IconButton(
-                  color: Colors.white,
-                  onPressed: () async {
-                    try {
-                      await AccountProvider().logout();
-
-                      Navigator.popAndPushNamed(context, '/loginpage');
-                    } on AppwriteException catch (e) {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                          content: Text(e.message ?? 'Error login out')));
-                    }
-                  },
-                  icon: const Icon(Icons.logout),
-                ),
-              ],
               title: const Text('Deelz Mobile'),
             )
           : AppBar(
               backgroundColor: Colors.transparent,
               title: WindowTitleBarBox(
                 child: MoveWindow(
-                  child: Text('Deelz'),
+                  child: const Text('Deelz'),
                 ),
               ),
             ),
@@ -177,15 +161,37 @@ Widget buildDrawer(BuildContext context) {
                     accountEmail: Text(snapshot.data?.email ?? ''
                         // snapshot.data!.email,
                         ),
-                    currentAccountPicture: CircleAvatar(
-                      child: ClipOval(
-                        child: Image.asset(
-                          'assets/images/mando.jpg',
-                          height: 110,
-                          width: 110,
-                          fit: BoxFit.cover,
+                    currentAccountPicture: Container(
+                      width: 100,
+                      height: 100,
+                      alignment: AlignmentDirectional.center,
+                      child: Stack(children: [
+                        CircleAvatar(
+                          radius: 184.0,
+                          child: ClipOval(
+                            child: Image.asset(
+                              'assets/images/mando.jpg',
+                              height: 110,
+                              width: 110,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
                         ),
-                      ),
+                        Align(
+                          alignment: Alignment.bottomRight,
+                          child: snapshot.data?.emailVerification == false
+                              ? Container()
+                              : SizedBox(
+                                  height: 17,
+                                  child: Container(
+                                      child: const Icon(
+                                    Icons.check_circle_rounded,
+                                    color: Colors.green,
+                                    size: 18.0,
+                                  )),
+                                ),
+                        ),
+                      ]),
                     ),
                     //TODO!: implement user avatar
                     decoration: const BoxDecoration(
@@ -205,7 +211,7 @@ Widget buildDrawer(BuildContext context) {
                         Navigator.pop(context);
                         Navigator.pushNamed(context, '/settingspage');
                       }),
-                  Divider(),
+                  const Divider(),
                   ListTile(
                       leading: const Icon(Icons.logout),
                       title: const Text(
@@ -227,7 +233,7 @@ Widget buildDrawer(BuildContext context) {
                       ),
                 ],
               ))
-            : CircularProgressIndicator();
+            : const CircularProgressIndicator();
         //
       }));
 }

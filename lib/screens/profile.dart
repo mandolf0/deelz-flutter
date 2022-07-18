@@ -1,8 +1,10 @@
 import 'package:appwrite/appwrite.dart';
 import 'package:appwrite/models.dart';
+import 'package:deelz/api/client.dart';
 import 'package:deelz/core/presentation/notifiers/auth_state.dart';
 import 'package:deelz/core/res/app_constants.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:provider/provider.dart';
 // import 'package:deelz/data/model/team.dart';
 
@@ -52,13 +54,21 @@ class _ProfilePageState extends State<ProfilePage> {
               print(myUser['userName']);
             });
           },
-          icon: Icon(Icons.account_box),
+          icon: const Icon(Icons.account_box),
         )
       ]),
-      body: Consumer<AccountProvider>(
-        builder: (context, state, child) {
-          final user = state.current;
-          if (state.signedIn == false) return Container();
+      body: FutureBuilder(
+        future: ApiClient.account.get(),
+        builder: ((BuildContext context, AsyncSnapshot<User> snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+                child: SpinKitCircle(
+              color: Colors.blue,
+            ));
+          }
+          //  builder: (context, state, child) {
+          final user = snapshot.data;
+          //if (state.signedIn == false) return Container();
 
           return Form(
             key: formKey,
@@ -66,14 +76,43 @@ class _ProfilePageState extends State<ProfilePage> {
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 11.0),
               children: [
-                const Hero(
-                  tag: 'myprofile',
-                  child: CircleAvatar(
-                    backgroundImage: AssetImage('assets/images/mando.jpg'),
-                    radius: 184.0,
+                Center(
+                  child: Container(
+                    alignment: Alignment.center,
+                    height: 220,
+                    width: 220,
+                    // color: Colors.red,
+                    child: Stack(
+                      children: [
+                        const Align(
+                          alignment: Alignment.bottomRight,
+                          child: Hero(
+                            tag: 'myprofile',
+                            child: CircleAvatar(
+                              backgroundImage:
+                                  AssetImage('assets/images/mando.jpg'),
+                              radius: 184.0,
+                            ),
+                          ),
+                        ),
+                        //verification symbol
+                        Align(
+                          alignment: Alignment.bottomRight,
+                          child: user?.emailVerification == false
+                              ? Container()
+                              : Container(
+                                  child: const Icon(
+                                  Icons.check_circle_rounded,
+                                  color: Colors.green,
+                                  size: 56.0,
+                                )),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-                state.current?.emailVerification == false
+                const SizedBox(height: 8),
+                user?.emailVerification == false
                     ? ElevatedButton(
                         child: const Text('Send Verification email'),
                         onPressed: () => AccountProvider().verifyEmail().then(
@@ -82,17 +121,13 @@ class _ProfilePageState extends State<ProfilePage> {
                                     content: const Text(
                                         'Email verification link sent')))),
                       )
-                    : Container(
-                        child: const Icon(
-                        Icons.circle,
-                        color: Colors.green,
-                      )),
+                    : Container(),
                 ListTile(
-                  title: Text(state.current?.name ?? '',
+                  title: Text(user?.name ?? '',
                       style: AppConstants.ksTextStyleLightSecondary),
                 ),
                 ListTile(
-                  title: Text(state.current!.email,
+                  title: Text(user!.email,
                       style: AppConstants.ksTextStyleLightSecondary),
                 ),
                 const ListTile(
@@ -108,7 +143,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                   ),
                 ),
-                Text(state.current!.prefs.data['company']),
+                // Text(state.current!.prefs.data['company']),
                 Center(
                   child: Text(
                     'My Teams',
@@ -151,7 +186,7 @@ class _ProfilePageState extends State<ProfilePage> {
               ],
             ),
           );
-        },
+        }),
       ),
     );
   }

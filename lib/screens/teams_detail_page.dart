@@ -1,5 +1,6 @@
 import 'package:appwrite/appwrite.dart';
 import 'package:appwrite/models.dart';
+import 'package:deelz/api/client.dart';
 import 'package:flutter/material.dart';
 import 'package:deelz/core/presentation/notifiers/auth_state.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -19,6 +20,7 @@ class _TeamDetailsPageState extends State<TeamDetailsPage> {
   List<Team> teams = [];
   //email controller
   TextEditingController _emailController = TextEditingController();
+  TextEditingController _roleController = TextEditingController();
 
   @override
   void initState() {
@@ -211,6 +213,24 @@ class _TeamDetailsPageState extends State<TeamDetailsPage> {
       child: ListView(
         shrinkWrap: true,
         children: [
+          TextField(
+            controller: _roleController,
+          ),
+          TextButton(
+              onPressed: () {
+                AccountProvider()
+                    .membershipAdd('',
+                        teamId: '51527270-2596-444d-9c2d-443f481ae640',
+                        email: 'gaby@me.com',
+                        roles: ['sales']
+                        // roles: ['sales', 'office'],
+                        )
+                    .then((value) =>
+                        Fluttertoast.showToast(msg: 'Added to team with role'))
+                    .onError((error, stackTrace) =>
+                        Fluttertoast.showToast(msg: error.toString()));
+              },
+              child: Text('Add Role')),
           const SizedBox(height: 12),
           const Center(
             child: Text(

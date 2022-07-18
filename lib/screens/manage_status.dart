@@ -1,5 +1,6 @@
 import 'package:appwrite/appwrite.dart';
 import 'package:appwrite/models.dart';
+import 'package:deelz/data/store.dart';
 import 'package:flutter/material.dart';
 import 'package:deelz/api/client.dart';
 import 'package:deelz/core/presentation/notifiers/auth_state.dart';
@@ -57,6 +58,8 @@ class _ManageStatusState extends State<ManageStatus> {
     subscription = realtime.subscribe([
       'collections.$itemsCollection.documents'
     ]); //replace <collectionId> with the ID of your items collection, which can be found in your collection's settings page.
+
+    Store.get("globalTeamId").then((value) => print("global team id ${value}"));
 
     // listen to changes
     subscription!.stream.listen((data) {
@@ -158,17 +161,18 @@ class _ManageStatusState extends State<ManageStatus> {
           : buildListViewBuilder(context, itemList: items),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: FloatingActionButton(
-        child: Icon(Icons.add),
+        child: const Icon(Icons.add),
         onPressed: () {
           // dialog to add new item set editing to false
           itemToEdit = null;
-          showMyDialog(context);
+          showMyDialog(context, item: null);
         },
       ),
     );
   }
 
-  void showMyDialog(BuildContext context, {bool editing = false}) {
+  void showMyDialog(BuildContext context,
+      {bool editing = false, Status? item}) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -208,7 +212,7 @@ class _ManageStatusState extends State<ManageStatus> {
                     _updateItem(name, description);
                     _nameController.clear();
                     _desciptionController.clear();
-                    itemToEdit = null;
+                    //    itemToEdit = null;
                     break;
                   case false:
                     _addItem(name, description);
@@ -254,11 +258,12 @@ class _ManageStatusState extends State<ManageStatus> {
               onLongPress: () {
                 //update an item
                 itemToEdit = items[index];
+                print(itemToEdit!.id);
                 //set controllers to the item values
                 _nameController.text = itemToEdit!.status!;
                 _desciptionController.text = itemToEdit!.description ?? '';
 
-                showMyDialog(context, editing: true);
+                showMyDialog(context, editing: true, item: items[index]);
               }).addNeumorphism(),
         );
       },
@@ -273,11 +278,12 @@ class _ManageStatusState extends State<ManageStatus> {
         data: {'status': name, 'description': description},
         read: [
           ///! use this when payload create
-          'user:${user.$id}',
-          'team:62c0fe9a6a8722834ef7'
+          "user:${user.$id}",
+          /*  "team:62c0fe9a6a8722834ef7",
+          "team:${Store.get("globalTeamId")}", */
           // 'team:' + teams.list().
         ],
-        write: ['user:${user.$id}', 'team:62c0fe9a6a8722834ef7'],
+        write: ['user:${user.$id}'],
         // documentId: 'unique()',
       );
       loadItems();
@@ -288,20 +294,47 @@ class _ManageStatusState extends State<ManageStatus> {
 
   void _updateItem(String status, String? description) async {
     try {
-      await ApiClient.database.updateDocument(
-        documentId: itemToEdit!.id!,
-        collectionId: itemsCollection,
-        data: {'status': status, 'description': description},
-        read: [
-          ///! use this when payload create
-          'user:${user.$id}',
-          'team:62c0fe9a6a8722834ef7'
-          // 'team:' + teams.list().
-        ],
-        write: ['user:${user.$id}', 'team:62c0fe9a6a8722834ef7'],
-        // documentId: 'unique()',
-      );
-      itemToEdit = null;
+      String? globalTeam = "";
+      final DocumentList rsMyGlobalTeam = await ApiClient.database
+          .listDocuments(
+              collectionId: 'companies',
+              queries: [Query.equal('\$id', '62d498d4054fa023ddbf')]);
+      Future rs = Store.set(
+          'globalTeamId', rsMyGlobalTeam.documents[0].data['globalTeamId']);
+      rs.then((thisteam) => print(thisteam));
+
+      final myTeam = Store.get('globalTeamId');
+
+      myTeam.then((value) async {
+        globalTeam = value;
+        print(value);
+
+        await ApiClient.database.updateDocument(
+            documentId: itemToEdit!.id!,
+            collectionId: itemsCollection,
+            data: {
+              'status': status,
+              'description': description
+            },
+            read: [
+              ///! use this when payload create
+              'user:${user.$id}',
+
+              'team:${globalTeam}/owner'
+
+              // 'team:' + teams.list().
+            ],
+            write: [
+              'user:${user.$id}',
+              'team:${globalTeam}/owner'
+            ]
+            // documentId: 'unique()',
+            );
+        // got my team
+      });
+      loadItems();
+
+      // itemToEdit = null;
     } on AppwriteException catch (e) {
       print(e.message);
     }

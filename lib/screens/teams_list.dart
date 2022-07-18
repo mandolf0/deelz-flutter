@@ -7,6 +7,7 @@ import 'package:deelz/core/presentation/notifiers/auth_state.dart';
 import 'package:deelz/core/res/app_constants.dart';
 import 'package:deelz/extensions.dart';
 import 'package:deelz/screens/teams_detail_page.dart';
+import 'package:yo_ui/yo_ui.dart';
 
 class TeamListPage extends StatefulWidget {
   const TeamListPage({Key? key}) : super(key: key);
@@ -149,6 +150,10 @@ class _TeamListPageState extends State<TeamListPage> {
                   ),
                 ),
                 const SizedBox(height: 8),
+                teams.isEmpty
+                    ? YoButton(title: 'Create Admin team')
+                    : Container(),
+
                 ...teams.map(
                   (team) => Card(
                     elevation: 1.0,

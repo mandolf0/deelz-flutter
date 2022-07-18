@@ -21,6 +21,7 @@ class ApiClient {
       );
   static Storage get storage => Storage(_instance._client);
   static Teams get teams => Teams(_instance._client);
+
   static final ApiClient _instance = ApiClient._internal();
   ApiClient._internal();
   factory ApiClient() => _instance;
