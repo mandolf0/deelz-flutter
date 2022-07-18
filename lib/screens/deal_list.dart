@@ -34,6 +34,8 @@ class _DealsListState extends State<DealsList> {
   // ran once to load items. Used to set deal.statusId based on id match.
   List<Status> statuses = [];
 
+  List<Map<String, dynamic>> companyUsers = [];
+
   late Deal? itemToEdit;
   String currentItemStatus = '';
   final TextEditingController _nameController = TextEditingController();
@@ -61,8 +63,8 @@ class _DealsListState extends State<DealsList> {
 
   loadItems() async {
     // items.clear();
-
-    DocumentList res = await db.listDocuments(
+    //companyUsers = context.read<AccountProvider>().usersAvailable!.toList();
+    DocumentList rsDeals = await db.listDocuments(
       collectionId: itemsCollection,
     );
     // lookup status collectiong for later traversing
@@ -74,14 +76,14 @@ class _DealsListState extends State<DealsList> {
         .map((e) => Status.fromMap(e.data))
         .toList();
 
-    if (res.documents.isNotEmpty) {
-      res.documents.forEach((deal) async {
+    if (rsDeals.documents.isNotEmpty) {
+      rsDeals.documents.forEach((deal) async {
         // interpolate Status colletion and set values for ```deal```
         deal.data['status_id'] = statuses
             .firstWhere((item) => item.id!.contains(deal.data['status_id']));
       });
     }
-    var result = List<Document>.from(res.documents)
+    var result = List<Document>.from(rsDeals.documents)
         .map((e) => Deal.fromMap(e.data))
         .toList();
     items = result;
@@ -355,6 +357,7 @@ class _DealsListState extends State<DealsList> {
           elevation: 2.0,
           shadowColor: const Color(0xff909090),
           child: ListTile(
+
               //todo! use ternary operator to show list of deals or dealsManage based on itemtoedit
               onTap: () => Navigator.push(
                     context,
@@ -437,39 +440,44 @@ class _DealsListState extends State<DealsList> {
   }
 
   void _addItem(String name, String? address) async {
-    try {
-      await db.createDocument(
-        documentId: 'unique()',
-        collectionId: itemsCollection,
-        data: {
-          'cust_name': name,
-          //!TODO pick status Id from list.
-          'status_id': currentItemStatus,
-          'phone': 'needsfield phone',
-          'address': address,
-          'signed_date': DateTime.now().millisecondsSinceEpoch.toString(),
-          'adjusters_date': DateTime.now().millisecondsSinceEpoch.toString(),
-          'claim_no': 'new val',
-          'carrier_id': 'new val',
-          'sales_rep_id': user.$id,
-        },
-        read: [
-          ///! use this when payload create
-          'user:${AccountProvider().current!.$id}',
-          "user:${user.$id}",
+    String? globalTeam = "";
 
-          "team:${Store.get('globalTeamId')}/owner"
-          // 'team:' + teams.list().
-        ],
-        write: [
-          'user:${AccountProvider().current!.$id}',
-          "team:${Store.get('globalTeamId')}/owner"
-        ],
-        // documentId: 'unique()',
-      );
-    } on AppwriteException catch (e) {
-      print(e.message);
-    }
+    final rsMyTeam = Store.get('globalTeamId');
+    rsMyTeam.then((teamId) async {
+      globalTeam = teamId;
+
+      try {
+        await db.createDocument(
+          documentId: 'unique()',
+          collectionId: itemsCollection,
+          data: {
+            'cust_name': name,
+            //!TODO pick status Id from list.
+            'status_id': currentItemStatus,
+            'phone': '000-111-222',
+            'address': address,
+            'signed_date': DateTime.now().millisecondsSinceEpoch.toString(),
+            'adjusters_date': DateTime.now().millisecondsSinceEpoch.toString(),
+            'claim_no': 'new val',
+            'carrier_id': 'new val',
+            'sales_rep_id': user.$id,
+          },
+          read: [
+            "user:${user.$id}",
+            'team:$globalTeam/owner',
+            'team:$globalTeam/admin',
+          ],
+          write: [
+            "user:${user.$id}",
+            'team:$globalTeam/owner',
+            'team:$globalTeam/admin',
+          ],
+          // documentId: 'unique()',
+        );
+      } on AppwriteException catch (e) {
+        print(e.message);
+      }
+    }); //my team id fetch
   }
 
   void _updateItem(String status, String? description) async {
@@ -480,7 +488,7 @@ class _DealsListState extends State<DealsList> {
         data: {
           'cust_name': status,
           'address': description,
-          'signed_date': DateTime.now().millisecondsSinceEpoch,
+          // 'signed_date': DateTime.now().millisecondsSinceEpoch,
           'status_id': currentItemStatus
         },
         /*  read: [
@@ -495,6 +503,7 @@ class _DealsListState extends State<DealsList> {
       );
       itemToEdit = null;
       Fluttertoast.showToast(msg: 'Saved', backgroundColor: Colors.green);
+      loadItems();
     } on AppwriteException catch (e) {
       Fluttertoast.showToast(
         msg: e.message.toString(),
